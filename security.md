@@ -283,13 +283,13 @@ That's great for most projects, but we should turn off all radios that are not n
   # Additional overlays and parameters are documented /boot/overlays/README
   ```
 
-  * Disable Bluetooth with this line
+  * Disable Bluetooth by adding the this line
 
     ```
     dtoverlay=disable-bt
     ```
 
-  * If you're running your RaspiBolt with a network cable, disable Wifi with this line
+  * If you're running your RaspiBolt with a network cable, disable Wifi by adding this line
 
     ```
     dtoverlay=disable-wifi

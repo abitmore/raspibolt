@@ -17,6 +17,11 @@ No need to trust anyone else.
 
 ---
 
+Established 2017, last updated 11/2021
+{: .fs-2 }
+
+---
+
 ## What is the RaspiBolt?
 
 With this guide, you can set up a Bitcoin and Lightning node from scratch, doing everything yourself.
@@ -43,12 +48,12 @@ But it works on most hardware platforms because it only uses standard Debian Lin
 
 Your Bitcoin node will offer the following functionality:
 
-* Bitcoin: direct and trustless participation in the Bitcoin peer-to-peer network, full validation of blocks and transactions
-* Electrum server: connect your compatible wallets (including hardware wallets) to your own node
-* Blockchain Explorer: web-based Explorer to privately look up transactions, blocks, and more
-* Lightning: full client with stable long-term channels and a web-based management interface
-* Always on: services are constantly synced and available 24/7
-* Reachable from anywhere: connect to all your services through the Tor network
+* **Bitcoin**: direct and trustless participation in the Bitcoin peer-to-peer network, full validation of blocks and transactions
+* **Electrum server**: connect your compatible wallets (including hardware wallets) to your own node
+* **Blockchain Explorer**: web-based Explorer to privately look up transactions, blocks, and more
+* **Lightning**: full client with stable long-term channels and a web-based management interface
+* **Always on**: services are constantly synced and available 24/7
+* **Reachable from anywhere**: connect to all your services through the Tor network
 
 ### Target audience
 
@@ -72,12 +77,12 @@ The bonus section contains more specific guides that build on top of the main se
 More fun, lots of knowledge, but with lesser maintenance guarantees.
 Everything is optional.
 
-1. [Bonus guides](bonus-section.md)
+* [Bonus guides](bonus-section.md)
 
 Running into issues?
 
-1. [Troubleshooting](troubleshooting.md): first aid to debug your system
-1. [FAQ](faq.md): frequently asked questions and further reading
+* [Troubleshooting](troubleshooting.md): first aid to debug your system
+* [FAQ](faq.md): frequently asked questions and further reading
 
 ---
 
@@ -93,6 +98,14 @@ Find help and other RaspiBolt users on the following platforms:
 And feel free to join the many other contributors if you see something that can be improved!
 
 <br /><br />
+
+---
+
+## Looking for an older version?
+
+If you're looking for an older version of this guide, check out the following archive pages:
+
+* version 1:
 
 ---
 

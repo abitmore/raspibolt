@@ -108,7 +108,6 @@ The whole process takes about 30 minutes.
   ```
 
 * Switch to "electrs" user and create config file with the following content.
-  Replace `<PasswordB>` with your actual `password [B]`
 
   ```sh
   $ sudo su - electrs
