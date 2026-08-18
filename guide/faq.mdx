@@ -1,0 +1,240 @@
+---
+title: FAQ
+description: Upgrading from v3, reading an ext4 SSD on Windows, restoring LND data, common Linux commands, setting a fixed IP. Answers to the questions that come up again and again in the Telegram group.
+---
+
+Short answers to the questions that come up most often. If yours
+isn't here, the [Telegram group](https://t.me/raspibolt) and the
+[GitHub issues](https://github.com/raspibolt/raspibolt/issues) are
+the two places to ask.
+
+## How long does the initial blockchain sync take?
+
+Expect 3-5 days on a Pi 5 with a fast SSD. The bottleneck is not
+download speed. Bitcoin Core verifies every digital signature in
+every transaction ever recorded, and that takes time. A slower
+machine or a spinning hard drive can push past a week.
+
+Once you're synced, catching up after a restart takes minutes, not
+days. Initial sync is a one-time cost.
+
+## Can I get rich by routing Lightning payments?
+
+Nobody really knows. Probably not. Routing fees on a well-placed
+node cover electricity and a bit of the hardware, not much more.
+Run a Lightning node because you want payments to work, not
+because you want a yield-bearing business. Enjoy the ride.
+
+## Can I read the Ext4 SSD on a Windows computer?
+
+Ext4 isn't compatible with Windows out of the box. Tools like
+[Linux File Systems for Windows](https://www.paragon-software.com/home/linuxfs-windows/)
+(Paragon, 10-day free trial) let you mount the drive read/write. On
+macOS, [extFS for Mac](https://www.paragon-software.com/home/extfs-mac/)
+does the same.
+
+If you only need to copy files off the drive once, plugging it into
+another Linux box, or the Pi itself, is usually the path of least
+resistance.
+
+## How much disk space do I need?
+
+A 2 TB SSD. The blockchain is around 700 GB as of 2026, growing
+roughly 7 GB per month. The Electrs index adds another ~70 GB, and
+the OS takes ~20 GB. A 1 TB drive is basically full on day one. See
+[Hardware](/docs/raspberry-pi/preparations) for what to buy and
+which SSD enclosure chipsets to avoid.
+
+## Can I migrate an older RaspiBolt to v4?
+
+Not cleanly. v4 is built on Debian 13 "Trixie" with a different
+package set, a different reverse proxy, and a different layout for
+secrets and data directories. The safest upgrade is a **fresh
+install**, then restore the parts that are hard to recreate.
+
+The full v3 guide stays archived at [v3.raspibolt.org](https://v3.raspibolt.org)
+if you need to retrace your old setup while migrating.
+
+The things worth keeping from an older node:
+
+- **LND data** (`/data/lnd` or `/mnt/ext/lnd`, depending on version)
+- **Static channel backup** (`channel.backup`)
+- **Seed phrase and passwords** (you wrote those down, right?)
+
+### Back up LND before you start
+
+<Callout type="warn" title="Never run two LND instances on the same seed">
+Once you've copied the LND data directory off the old node, move it
+aside so the old node can't start again by accident. A second LND
+node broadcasting stale channel state means force-closed channels
+and, in the worst case, lost funds.
+</Callout>
+
+On the old node, create a mount point for the thumb drive:
+
+```bash
+sudo mkdir /mnt/thumbdrive
+```
+
+List block devices to find which one is the thumb drive:
+
+```bash
+lsblk -pli
+```
+
+Mount it (adjust `/dev/sdb1` to match what `lsblk` showed):
+
+```bash
+sudo mount /dev/sdb1 /mnt/thumbdrive/
+```
+
+Copy the LND data directory across, preserving ownership and resuming on interruption:
+
+```bash
+sudo rsync -rhvPog --append-verify /data/lnd /mnt/thumbdrive/
+```
+
+Rename the original on the old node so it can never start again by accident:
+
+```bash
+sudo mv /data/lnd /data/lnd-do-not-start-again
+```
+
+Grab the static channel backup file too, it's cheap insurance
+against anything going wrong with the full directory restore.
+
+### Restore onto the new node
+
+Finish the v4 setup through the Lightning section, but **don't
+create a wallet** when LND first starts.
+
+Stop LND on the new node:
+
+```bash
+sudo systemctl stop lnd
+```
+
+Mount the thumb drive:
+
+```bash
+sudo mount /dev/sdb1 /mnt/thumbdrive/
+```
+
+Copy the LND data directory into place:
+
+```bash
+sudo rsync -rhvPog --append-verify /mnt/thumbdrive/lnd /data/
+```
+
+Fix ownership so the `lnd` user owns its data:
+
+```bash
+sudo chown -R lnd:lnd /data/lnd
+```
+
+Start LND back up:
+
+```bash
+sudo systemctl start lnd
+```
+
+LND should come up with your existing wallet, peers, and channels.
+
+### What about the Bitcoin blockchain?
+
+Bitcoin Core doesn't need a backup, it can download and verify the
+entire chain from scratch. That takes a few days on a Pi, so if you
+want to skip the resync, `rsync` the old `bitcoin` data directory
+across from the old drive before you point the new node at it.
+
+## Can I run this on something other than a Raspberry Pi 5?
+
+The guide targets the Pi 5. The Pi 4 with 8 GB RAM works but
+initial sync and Electrs indexing are noticeably slower. Any 64-bit
+ARM or x86 board running Debian 13 "Trixie" should be compatible,
+but is untested. The hard requirements are 8 GB RAM and a fast SSD.
+
+## My node was offline for a few days. What now?
+
+Nothing special. Bitcoin Core picks up from where it stopped and
+catches up with the chain. LND reconnects to channel peers
+automatically. Give it 30-60 minutes after startup before worrying
+about anything. Lightning channels stay safe while your node is
+offline. They just can't route or send payments while it's down.
+
+## How do I update Bitcoin Core or LND?
+
+Follow the same install steps, starting from the download section.
+Stop the service, download and verify the new binary, replace it,
+and restart. Config files don't change between minor versions unless
+the release notes say so. Read the LND release notes before
+upgrading; it occasionally requires a database migration.
+
+## What do all the Linux commands do?
+
+A short reference for commands that show up repeatedly in this
+guide. For any specific one, `man <command>` has the full manual,
+type `q` to exit.
+
+| Command | What it does | Example |
+| --- | --- | --- |
+| `cd` | change directory | `cd /home/bitcoin` |
+| `ls` | list directory contents | `ls -la /data` |
+| `cp` | copy | `cp file.txt newfile.txt` |
+| `mv` | move or rename | `mv file.txt moved.txt` |
+| `rm` | remove | `rm tempfile.txt` |
+| `mkdir` | make directory | `mkdir /home/bitcoin/new` |
+| `ln -s` | make symlink | `ln -s /target /link` |
+| `sudo` | run as superuser | `sudo nano textfile.txt` |
+| `su` | switch user | `sudo su bitcoin` |
+| `chown` | change owner | `chown bitcoin:bitcoin myfile.txt` |
+| `chmod` | change permissions | `chmod +x script.sh` |
+| `nano` | edit a text file | `nano textfile.txt` |
+| `tar` | archive tool | `tar -cvf a.tar file1.txt file2.txt` |
+| `exit` | leave current shell | `exit` |
+| `systemctl` | control a systemd service | `sudo systemctl start bitcoind` |
+| `journalctl` | read systemd logs | `sudo journalctl -u bitcoind` |
+| `htop` | live process and resource view | `htop` |
+| `shutdown` | power off or reboot | `sudo shutdown -r now` |
+
+## Where can I learn more about Bitcoin and Lightning?
+
+A few hand-picked starting points that actually teach rather than
+pitch:
+
+- [What is Bitcoin?](https://bitcoinmagazine.com/guides/what-bitcoin): Bitcoin Magazine's introduction.
+- [Understanding the Lightning Network](https://bitcoinmagazine.com/articles/understanding-the-lightning-network-part-building-a-bidirectional-payment-channel-1464710791):
+  the original walkthrough of payment channels.
+- [Bitcoin resources](https://www.lopp.net/bitcoin-information.html)
+  and [Lightning resources](https://www.lopp.net/lightning-information.html)
+  by Jameson Lopp.
+
+## How do I give the Pi a fixed IP address?
+
+The cleanest answer is to set it in your router, assign a DHCP
+reservation for the Pi's MAC address so it always lands on the same
+IP. Every consumer router can do this; the menu is usually called
+"DHCP reservations" or "static leases".
+
+If your router can't, configure the address directly on the Pi via
+NetworkManager (the default on Debian 13 "Trixie").
+
+Set the static address, gateway, DNS, and method on the wired connection:
+
+```bash
+sudo nmcli connection modify "Wired connection 1" \
+  ipv4.addresses 192.168.1.50/24 \
+  ipv4.gateway 192.168.1.1 \
+  ipv4.dns 192.168.1.1 \
+  ipv4.method manual
+```
+
+Bring the connection back up to apply the change:
+
+```bash
+sudo nmcli connection up "Wired connection 1"
+```
+
+Replace the addresses with values that fit your network, and pick
+one **outside** the DHCP range your router hands out, otherwise
+you'll collide with some other device the next time it boots.
